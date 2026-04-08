@@ -39,6 +39,7 @@ from .models import Booking
 import requests
 
 class BookingDetailView(APIView):
+    permission_classes = [IsAuthenticated]
     """
     Retrieve booking details including room information.
     """

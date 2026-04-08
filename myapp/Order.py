@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from django.utils.timezone import now
 from .models import Room, Booking, Item, OrderItem
 from .serializers import OrderItemSerializer
@@ -8,6 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from .serializers import OrderItemSerializers
 
 class OrderItemView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         data = request.data

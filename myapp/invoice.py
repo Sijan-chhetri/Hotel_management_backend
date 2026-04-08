@@ -2,6 +2,7 @@ from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from django.core.files.base import ContentFile
+from rest_framework.permissions import IsAuthenticated
 from .models import Invoice
 
 
@@ -321,6 +322,8 @@ from .serializers import InvoiceSerializer
 
 
 class GenerateInvoiceView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         booking_id = request.data.get("booking_id")
         payment_id = request.data.get("payment_id")

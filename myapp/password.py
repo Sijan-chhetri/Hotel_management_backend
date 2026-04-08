@@ -2,12 +2,14 @@ from django.contrib.auth import get_user_model, authenticate
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth import update_session_auth_hash  
 
 User = get_user_model()
 
 class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
     """
     View to change user password.
     """

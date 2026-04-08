@@ -169,6 +169,8 @@ class UserDetailView(APIView):
 
 
 class BookingCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         try:
             guest_name = request.data.get("guest_name")
@@ -207,6 +209,7 @@ class BookingCreateView(APIView):
 
 # Guest Views
 class GuestListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = GuestSerializer
 
     def get_queryset(self):
@@ -216,6 +219,7 @@ class GuestListCreateView(generics.ListCreateAPIView):
         ).distinct()
 
 class GuestDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Guest.objects.all()
     serializer_class = GuestSerializer
 

@@ -44,6 +44,9 @@ class EmployeeListCreateAPIView(APIView):
 
 
 class EmployeeDetailAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def get_object(self, employee_id):
         
         try:
