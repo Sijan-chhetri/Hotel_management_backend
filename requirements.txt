@@ -1,0 +1,8 @@
+Django>=5.1.3
+djangorestframework
+djangorestframework-simplejwt
+django-cors-headers
+django-jazzmin
+Pillow
+requests
+reportlab
