@@ -67,6 +67,20 @@ class BookingListCreateView(APIView):
             # Create booking
             booking = Booking.objects.create(guest=guest, **serializer.validated_data)
 
+            # If guest left notes, auto-create a housekeeping special request
+            if booking.notes and booking.notes.strip():
+                from .models import SpecialRequest
+                SpecialRequest.objects.create(
+                    hotel=booking.room.hotel,
+                    booking=booking,
+                    room_id=booking.room.room_id,
+                    guest_name=guest.name,
+                    request_type='other',
+                    description=booking.notes.strip(),
+                    status='pending',
+                    source='reservation',
+                )
+
             # Send booking confirmation email
             email_sent = send_booking_email(booking)
 
@@ -108,6 +122,7 @@ from django.db import transaction
 
 class MultiBookingView(APIView):
     def post(self, request):
+        import uuid
         data = request.data
         guest_data = data.get("guest")
         room_ids = data.get("rooms", [])
@@ -119,7 +134,6 @@ class MultiBookingView(APIView):
 
         try:
             with transaction.atomic():
-                # Create or get guest
                 guest, _ = Guest.objects.get_or_create(
                     email=guest_data['email'],
                     defaults={
@@ -132,6 +146,9 @@ class MultiBookingView(APIView):
                         'doc_number': guest_data['doc_number']
                     }
                 )
+
+                # Single group_id shared across all rooms in this booking
+                group_id = str(uuid.uuid4())[:8].upper()
 
                 successful_bookings = []
                 successful_booking_objects = []
@@ -160,18 +177,35 @@ class MultiBookingView(APIView):
                         room=room,
                         check_in_date=check_in_date,
                         check_out_date=check_out_date,
-                        status="booked"
+                        status="booked",
+                        group_id=group_id,
+                        notes=data.get('notes', ''),
                     )
+
+                    # Auto-create housekeeping special request if notes provided
+                    notes = data.get('notes', '').strip()
+                    if notes:
+                        from .models import SpecialRequest
+                        SpecialRequest.objects.create(
+                            hotel=room.hotel,
+                            booking=booking,
+                            room_id=room.room_id,
+                            guest_name=guest.name,
+                            request_type='other',
+                            description=notes,
+                            status='pending',
+                            source='reservation',
+                        )
 
                     successful_bookings.append(BookingSerializer(booking).data)
                     successful_booking_objects.append(booking)
 
-                # Send ONE summary email for all successful bookings
                 if successful_booking_objects:
                     send_multi_booking_email(guest, successful_booking_objects, check_in_date, check_out_date)
 
                 return Response({
                     "success_count": len(successful_bookings),
+                    "group_id": group_id,
                     "failures": failed_rooms,
                     "bookings": successful_bookings
                 }, status=status.HTTP_201_CREATED if successful_bookings else status.HTTP_400_BAD_REQUEST)

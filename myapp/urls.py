@@ -39,6 +39,7 @@ from .integration import (
     ConsumableListView, ConsumableDetailView,
     RoomCleanedDeductView,
     UsageLogView, LowStockView,
+    ManualDeductView,
 )
 
 
@@ -166,6 +167,7 @@ urlpatterns = [
     path('integration/consumables/', ConsumableListView.as_view(), name='int-consumables'),
     path('integration/consumables/<int:pk>/', ConsumableDetailView.as_view(), name='int-consumable-detail'),
     path('integration/room-cleaned/', RoomCleanedDeductView.as_view(), name='int-room-cleaned'),
+    path('integration/manual-deduct/', ManualDeductView.as_view(), name='int-manual-deduct'),
     path('integration/usage-log/', UsageLogView.as_view(), name='int-usage-log'),
     path('integration/low-stock/', LowStockView.as_view(), name='int-low-stock'),
 ]

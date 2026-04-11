@@ -44,6 +44,14 @@ class OrderItemView(APIView):
                 quantity = int(item_entry.get("quantity", 1))
                 order = OrderItem.objects.create(booking=booking, item=item, quantity=quantity)
                 order_items.append(order)
+
+                # ── Integration: deduct from inventory if item is linked ──
+                _deduct_inventory_for_order(order, request.user)
+
+                # ── Integration: if item is housekeeping-type, create a task ──
+                if item.category.lower() in ('housekeeping', 'towels', 'toiletries', 'cleaning'):
+                    _create_housekeeping_task_from_order(order, booking)
+
             except Item.DoesNotExist:
                 return Response(
                     {"error": f"Item with ID {item_entry['item_id']} not found or unavailable"},
@@ -113,3 +121,74 @@ class OrderItemView(APIView):
             "order_details": OrderItemSerializer(order_item).data
         }, status=status.HTTP_200_OK)
 
+
+
+# ── Integration helpers ───────────────────────────────────────────────────────
+
+def _deduct_inventory_for_order(order_item, hotel_user):
+    """Deduct inventory stock when an order is placed for items marked as order-deductible."""
+    from .models import HousekeepingConsumable, InventoryUsageLog, FrontDeskNotification, InventoryItem
+    LOW = 10
+
+    # Find inventory items belonging to this hotel that are order-deductible and match by name
+    inv_items = InventoryItem.objects.filter(
+        user=hotel_user,
+        usage_type__in=('order', 'both'),
+        name__iexact=order_item.item.name,
+    )
+
+    for inv in inv_items:
+        deduct = min(order_item.quantity, inv.quantity)
+        if deduct <= 0:
+            continue
+        inv.quantity -= deduct
+        inv.save(update_fields=['quantity'])
+
+        InventoryUsageLog.objects.create(
+            hotel=hotel_user,
+            inventory_item=inv,
+            quantity_used=deduct,
+            source='order',
+            reference=f"Order #{order_item.id} — {order_item.item.name}",
+        )
+
+        if inv.quantity < LOW:
+            FrontDeskNotification.objects.create(
+                hotel=hotel_user,
+                room_id=order_item.booking.room.room_id,
+                notif_type='general',
+                message=f'Low stock alert: {inv.name} has only {inv.quantity} units remaining.',
+                status='unread',
+            )
+
+
+def _create_housekeeping_task_from_order(order_item, booking):
+    """Auto-create a SpecialRequest housekeeping task when a guest orders a housekeeping item."""
+    from .models import SpecialRequest, FrontDeskNotification
+
+    category = order_item.item.category.lower()
+    type_map = {
+        'towels':      'towels',
+        'housekeeping': 'cleaning',
+        'toiletries':  'amenities',
+        'cleaning':    'cleaning',
+    }
+    request_type = type_map.get(category, 'other')
+
+    SpecialRequest.objects.create(
+        hotel=booking.room.hotel,
+        room_id=booking.room.room_id,
+        guest_name=booking.guest.name,
+        request_type=request_type,
+        description=f"Guest ordered: {order_item.item.name} × {order_item.quantity}",
+        status='pending',
+    )
+
+    FrontDeskNotification.objects.create(
+        hotel=booking.room.hotel,
+        room_id=booking.room.room_id,
+        guest_name=booking.guest.name,
+        notif_type='special_request',
+        message=f"Housekeeping task created: {order_item.item.name} × {order_item.quantity} for Room {booking.room.room_id}.",
+        status='unread',
+    )

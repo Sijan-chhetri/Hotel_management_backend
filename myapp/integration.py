@@ -51,10 +51,15 @@ class ConsumableListView(APIView):
     def post(self, request):
         s = ConsumableSerializer(data=request.data)
         if s.is_valid():
-            # verify item belongs to this hotel
+            # verify item belongs to this hotel AND is housekeeping-deductible
             item = s.validated_data['inventory_item']
             if item.user_id != request.user.id:
                 return Response({'detail': 'Item not found.'}, status=status.HTTP_404_NOT_FOUND)
+            if item.usage_type not in ('housekeeping', 'both'):
+                return Response(
+                    {'detail': 'Only items with usage type "Housekeeping" or "Both" can be added as consumables.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             s.save(hotel=request.user)
             return Response(s.data, status=status.HTTP_201_CREATED)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -168,3 +173,64 @@ class LowStockView(APIView):
         items = InventoryItem.objects.filter(user=request.user, quantity__lt=threshold)
         data = [{'id': i.id, 'name': i.name, 'category': i.category, 'quantity': i.quantity, 'vendor': i.vendor} for i in items]
         return Response(data)
+
+
+# ── Manual deduction (staff picks items + qty per room clean) ─────────────────
+
+class ManualDeductView(APIView):
+    """
+    Staff selects specific items and quantities to deduct for a room clean.
+    Payload: { room_id, guest_name, items: [{inventory_item_id, quantity}] }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        room_id    = request.data.get('room_id', '')
+        guest_name = request.data.get('guest_name', '')
+        items_data = request.data.get('items', [])
+        reference  = f"Room {room_id} cleaned" + (f" ({guest_name})" if guest_name else "")
+
+        if not items_data:
+            return Response({'detail': 'No items provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        low_stock_alerts = []
+        deducted = []
+
+        for entry in items_data:
+            item_id = entry.get('inventory_item_id')
+            qty     = int(entry.get('quantity', 1))
+            if not item_id or qty <= 0:
+                continue
+            try:
+                item = InventoryItem.objects.get(pk=item_id, user=request.user)
+            except InventoryItem.DoesNotExist:
+                continue
+
+            actual_deduct = min(qty, item.quantity)
+            if actual_deduct <= 0:
+                continue
+
+            item.quantity -= actual_deduct
+            item.save(update_fields=['quantity'])
+
+            InventoryUsageLog.objects.create(
+                hotel=request.user,
+                inventory_item=item,
+                quantity_used=actual_deduct,
+                source='housekeeping',
+                reference=reference,
+            )
+
+            deducted.append({'item': item.name, 'deducted': actual_deduct, 'remaining': item.quantity})
+
+            if item.quantity < LOW_STOCK_THRESHOLD:
+                low_stock_alerts.append(item.name)
+                FrontDeskNotification.objects.create(
+                    hotel=request.user,
+                    room_id=room_id,
+                    notif_type='general',
+                    message=f'Low stock alert: {item.name} has only {item.quantity} units remaining.',
+                    status='unread',
+                )
+
+        return Response({'deducted': deducted, 'low_stock_alerts': low_stock_alerts}, status=status.HTTP_200_OK)

@@ -61,7 +61,7 @@ class BookingSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Booking
-        fields = ['booking_id', 'guest', 'room', 'check_in_date', 'check_out_date', 'status', 'notes']
+        fields = ['booking_id', 'guest', 'room', 'check_in_date', 'check_out_date', 'status', 'notes', 'group_id']
         
         
 class BookingRoom(serializers.ModelSerializer):
@@ -154,7 +154,7 @@ class RoomBookingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = ['booking_id', 'guest', 'room', 'check_in_date', 'check_out_date', 'status', 'orders', 'notes']
+        fields = ['booking_id', 'guest', 'room', 'check_in_date', 'check_out_date', 'status', 'orders', 'notes', 'group_id']
 
 
 # serializers.py

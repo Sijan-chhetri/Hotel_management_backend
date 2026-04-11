@@ -172,7 +172,8 @@ class Booking(models.Model):
     check_in_date = models.DateField()
     check_out_date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='booked')
-    notes = models.TextField(blank=True, default='')  # Guest notes added at reservation time
+    notes = models.TextField(blank=True, default='')
+    group_id = models.CharField(max_length=50, blank=True, default='')  # shared across multi-room bookings  # Guest notes added at reservation time
 
     def __str__(self):
         return f"Booking {self.booking_id} - {self.guest.name} ({self.room.room_id})"
@@ -239,14 +240,22 @@ class Invoice(models.Model):
 
 
 class InventoryItem(models.Model):
+    USAGE_TYPE_CHOICES = [
+        ('general',      'General'),
+        ('housekeeping', 'Housekeeping'),
+        ('order',        'Order / Kitchen'),
+        ('both',         'Both (Housekeeping & Orders)'),
+    ]
+
     user = models.ForeignKey('User', on_delete=models.CASCADE) 
     name = models.CharField(max_length=255)
     category = models.CharField(max_length=100)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField(blank=True, null=True)
-    vendor= models.CharField(max_length=255)
+    vendor = models.CharField(max_length=255)
     date_added = models.DateTimeField(default=now)
+    usage_type = models.CharField(max_length=20, choices=USAGE_TYPE_CHOICES, default='general')
 
     def __str__(self):
         return self.name
@@ -469,12 +478,14 @@ class SpecialRequest(models.Model):
     ]
 
     hotel       = models.ForeignKey('User', on_delete=models.CASCADE, related_name='special_requests')
+    booking     = models.ForeignKey('Booking', on_delete=models.SET_NULL, null=True, blank=True, related_name='special_requests')
     room_id     = models.CharField(max_length=100)
     guest_name  = models.CharField(max_length=100, blank=True, default='')
     request_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     description = models.TextField(blank=True, default='')
     status      = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     assigned_to = models.CharField(max_length=100, blank=True, default='')
+    source      = models.CharField(max_length=20, default='manual')  # 'manual' | 'reservation'
     created_at  = models.DateTimeField(auto_now_add=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
 

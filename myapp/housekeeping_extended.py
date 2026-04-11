@@ -24,6 +24,8 @@ class LostFoundSerializer(serializers.ModelSerializer):
 
 
 class SpecialRequestSerializer(serializers.ModelSerializer):
+    check_in_date = serializers.DateField(source='booking.check_in_date', read_only=True, default=None)
+
     class Meta:
         model = SpecialRequest
         fields = '__all__'

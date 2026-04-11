@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / '.env')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -102,26 +105,61 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 
 
+# Database — Supabase in production, SQLite locally
+# import os
+# import dj_database_url
+# from django.core.exceptions import ImproperlyConfigured
+# from django.db import connections
+
+# _db_url = os.environ.get("postgresql://postgres:[depmiv-9wybsi-ceQror]@db.spoiumopdhwqmcxytfkc.supabase.co:5432/postgres")
+
+# if not _db_url:
+#     raise ImproperlyConfigured(
+#         "DATABASE_URL is not set. Supabase/Postgres connection is required."
+#     )
+
+# DATABASES = {
+#     "default": dj_database_url.parse(
+#         _db_url,
+#         conn_max_age=600,
+#         ssl_require=True,
+#     )
+# }
+
+# try:
+#     connections["default"].cursor()
+#     print("✅ Database connected successfully")
+# except Exception as e:
+#     raise ImproperlyConfigured(f"❌ Database connection failed: {e}")
+
+
+
+import os
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+from django.db import connections
 
-# Use DATABASE_URL env var in production, fall back to SQLite for local dev without internet
-_db_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:xusqSAtIdYLaXu16@db.spoiumopdhwqmcxytfkc.supabase.co:5432/postgres')
+_db_url = os.environ.get("DATABASE_URL")
 
-if _db_url.startswith('postgresql') or _db_url.startswith('postgres'):
-    DATABASES = {
-        'default': dj_database_url.parse(
-            _db_url,
-            conn_max_age=3600,
-            ssl_require=True,
-        )
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+if not _db_url:
+    raise ImproperlyConfigured(
+        "❌ DATABASE_URL is not set. Supabase/Postgres connection required."
+    )
+
+DATABASES = {
+    "default": dj_database_url.parse(
+        _db_url,
+        conn_max_age=600,
+        ssl_require=True,
+    )
+}
+
+try:
+    connections["default"].cursor()
+    print("✅ Database connected successfully")
+except Exception as e:
+    raise ImproperlyConfigured(f"❌ Database connection failed: {e}")
+
 
 
 

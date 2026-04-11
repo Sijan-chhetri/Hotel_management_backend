@@ -33,3 +33,6 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+else:
+    # Also serve media locally even when DEBUG=False (dev convenience)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
