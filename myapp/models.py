@@ -514,7 +514,7 @@ class LinenRecord(models.Model):
     ]
 
     hotel       = models.ForeignKey('User', on_delete=models.CASCADE, related_name='linen_records')
-    linen_type  = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    linen_type  = models.CharField(max_length=100)  # free text — e.g. "Towel", "Bedsheet", custom types
     quantity    = models.PositiveIntegerField(default=1)
     status      = models.CharField(max_length=20, choices=STATUS_CHOICES, default='in_use')
     room_id     = models.CharField(max_length=100, blank=True, default='')
