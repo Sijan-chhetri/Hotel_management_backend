@@ -508,7 +508,9 @@ class LinenRecord(models.Model):
     ]
     STATUS_CHOICES = [
         ('in_use',   'In Use'),
-        ('washed',   'Washed'),
+        ('dirty',    'Dirty'),
+        ('washing',  'Washing'),
+        ('washed',   'Washed / Clean'),
         ('damaged',  'Damaged'),
         ('disposed', 'Disposed'),
     ]

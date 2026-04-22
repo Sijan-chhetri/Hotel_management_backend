@@ -24,6 +24,7 @@ from .housekeeping_extended import (
     LostFoundView, LostFoundDetailView,
     SpecialRequestView, SpecialRequestDetailView,
     LinenView, LinenDetailView,
+    LinenIssueView, LinenCollectView,
 )
 from .employee_management import (
     AttendanceListView, AttendanceDetailView,
@@ -147,6 +148,8 @@ urlpatterns = [
     path('hk/special-requests/<int:pk>/', SpecialRequestDetailView.as_view(), name='hk-special-request-detail'),
     path('hk/linen/', LinenView.as_view(), name='hk-linen'),
     path('hk/linen/<int:pk>/', LinenDetailView.as_view(), name='hk-linen-detail'),
+    path('hk/linen/<int:pk>/issue/', LinenIssueView.as_view(), name='hk-linen-issue'),
+    path('hk/linen/<int:pk>/collect/', LinenCollectView.as_view(), name='hk-linen-collect'),
 
     # Front Desk Coordination
     path('fd/notifications/', NotificationListView.as_view(), name='fd-notifications'),

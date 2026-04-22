@@ -69,23 +69,21 @@ class OrderItemView(APIView):
 
         if booking_id:
             try:
-                # Ensure the booking belongs to the authenticated hotel
+                # Ensure the booking belongs to the authenticated hotel (any status)
                 booking = Booking.objects.get(
                     booking_id=booking_id,
-                    status="checked-in",
-                    check_in_date__lte=now().date(),
-                    check_out_date__gte=now().date(),
-                    room__hotel_id=hotel_id  # Filter by hotel
+                    room__hotel_id=hotel_id,
                 )
             except Booking.DoesNotExist:
                 return Response(
-                    {"error": "No current booking found for this booking_id"},
+                    {"error": "No booking found for this booking_id"},
                     status=status.HTTP_404_NOT_FOUND
                 )
-
-            orders = OrderItem.objects.filter(booking=booking)
+            orders = OrderItem.objects.filter(
+                booking=booking
+            ).select_related('booking', 'booking__room', 'item')
         else:
-            # Get all orders for bookings belonging to this hotel
+            # All orders for this hotel only
             orders = OrderItem.objects.filter(
                 booking__room__hotel_id=hotel_id
             ).select_related('booking', 'booking__room', 'item')

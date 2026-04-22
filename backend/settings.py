@@ -29,7 +29,12 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-8&ar7635wwt_nz
 
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', os.environ.get('PYTHONANYWHERE_HOST', '')]
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'hotel-management-backend-nu99.onrender.com',
+    os.environ.get('PYTHONANYWHERE_HOST', ''),
+]
 
 
 # Application definition
@@ -58,6 +63,7 @@ REST_FRAMEWORK = {
 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -65,21 +71,28 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',   
 ]
 
 
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
+    'https://localhost:3000',
     os.environ.get('FRONTEND_URL', 'http://localhost:3000'),
+]
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",  # allow all Vercel preview/production URLs
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
+    'https://localhost:3000',
     os.environ.get('FRONTEND_URL', 'http://localhost:3000'),
+    'https://hotel-management-backend-nu99.onrender.com',
 ]
 
+CORS_ALLOW_CREDENTIALS = True
 
 
 ROOT_URLCONF = 'backend.urls'

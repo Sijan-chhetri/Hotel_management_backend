@@ -218,3 +218,87 @@ class LinenDetailView(APIView):
         if err: return err
         obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ── Partial Linen Issue ───────────────────────────────────────────────────────
+
+class LinenIssueView(APIView):
+    """
+    Issue a partial quantity of clean linen back to rooms.
+    If qty < record.quantity: splits into issued (in_use) + remaining (washed).
+    If qty == record.quantity: moves entire record to in_use.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            record = LinenRecord.objects.get(pk=pk, hotel=request.user, status='washed')
+        except LinenRecord.DoesNotExist:
+            return Response({'detail': 'Clean linen record not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        qty = int(request.data.get('quantity', 0))
+        if qty <= 0:
+            return Response({'detail': 'Quantity must be greater than 0.'}, status=status.HTTP_400_BAD_REQUEST)
+        if qty > record.quantity:
+            return Response({'detail': f'Only {record.quantity} available.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if qty == record.quantity:
+            # Issue all — just update status
+            record.status = 'in_use'
+            record.save()
+            return Response(LinenSerializer(record).data)
+        else:
+            # Partial issue — create new in_use record, reduce original
+            from .models import LinenRecord as LR
+            LR.objects.create(
+                hotel=request.user,
+                linen_type=record.linen_type,
+                quantity=qty,
+                status='in_use',
+                room_id=record.room_id,
+                notes=record.notes,
+            )
+            record.quantity -= qty
+            record.save()
+            return Response({'issued': qty, 'remaining': record.quantity}, status=status.HTTP_200_OK)
+
+
+# ── Partial Linen Collection (in_use → dirty, with split) ────────────────────
+
+class LinenCollectView(APIView):
+    """
+    Collect a quantity of in_use linen as dirty.
+    If qty < record.quantity: splits — collected qty → dirty, remaining → stays in_use.
+    If qty == record.quantity: moves entire record to dirty.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            record = LinenRecord.objects.get(pk=pk, hotel=request.user, status='in_use')
+        except LinenRecord.DoesNotExist:
+            return Response({'detail': 'In-use linen record not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        qty = int(request.data.get('quantity', 0))
+        if qty <= 0:
+            return Response({'detail': 'Quantity must be greater than 0.'}, status=status.HTTP_400_BAD_REQUEST)
+        if qty > record.quantity:
+            return Response({'detail': f'Only {record.quantity} available.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if qty == record.quantity:
+            record.status = 'dirty'
+            record.save()
+            return Response(LinenSerializer(record).data)
+        else:
+            # Partial collect — create dirty record, reduce original
+            LinenRecord.objects.create(
+                hotel=request.user,
+                linen_type=record.linen_type,
+                quantity=qty,
+                status='dirty',
+                room_id=record.room_id,
+                notes=record.notes,
+            )
+            record.quantity -= qty
+            record.save()
+            return Response({'collected': qty, 'remaining': record.quantity}, status=status.HTTP_200_OK)
