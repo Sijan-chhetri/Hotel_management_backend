@@ -175,7 +175,7 @@ except Exception as e:
 
 
 
-
+#chnaged in changes
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
