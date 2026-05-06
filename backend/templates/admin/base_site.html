@@ -1,12 +1,29 @@
 {% extends "admin/base.html" %}
-{% load i18n %}
+{% load i18n static %}
 
-{% block title %}The HMS | Admin{% endblock %}
+{% block title %}{% if subtitle %}{{ subtitle }} — {% endif %}The HMS Admin{% endblock %}
 
 {% block branding %}
-  <h1 id="site-name">
-    <a href="{% url 'admin:index' %}" style="color: white;">HMS</a>
-  </h1>
+<a href="{% url 'admin:index' %}" class="navbar-brand" style="
+  font-size:17px;font-weight:900;color:#e9fe8d;letter-spacing:0.05em;
+  text-decoration:none;display:flex;align-items:center;gap:10px;">
+  <span style="
+    width:32px;height:32px;border-radius:8px;
+    background:linear-gradient(135deg,#e9fe8d,#c8e060);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="#1a2500">
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+      <polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="#1a2500" stroke-width="2"/>
+    </svg>
+  </span>
+  The HMS
+</a>
 {% endblock %}
 
 {% block nav-global %}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+{% endblock %}

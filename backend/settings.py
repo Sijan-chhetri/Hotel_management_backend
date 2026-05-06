@@ -1,8 +1,11 @@
 from pathlib import Path
 import os
-from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).resolve().parent.parent / '.env')
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent.parent / '.env')
+except ImportError:
+    pass
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -16,6 +19,133 @@ ALLOWED_HOSTS = [
     'hotel-management-backend-nu99.onrender.com',
     os.environ.get('PYTHONANYWHERE_HOST', ''),
 ]
+
+# ── Jazzmin Admin UI ──────────────────────────────────────────────────────────
+JAZZMIN_SETTINGS = {
+    "site_title": "The HMS",
+    "site_header": "The HMS",
+    "site_brand": "✦ The HMS",
+    "welcome_sign": "Hotel Management System — Admin Portal",
+    "copyright": "© 2025 The HMS",
+
+    "site_logo": None,
+    "site_icon": None,
+    "login_logo": None,
+    "login_logo_dark": None,
+
+    "topmenu_links": [
+        {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"name": "View Site", "url": "/", "new_window": True},
+        {"name": "Bookings", "model": "myapp.booking"},
+        {"name": "Guests", "model": "myapp.guest"},
+    ],
+
+    "usermenu_links": [
+        {"name": "View Site", "url": "/", "new_window": True},
+        {"model": "auth.user"},
+    ],
+
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+
+    "icons": {
+        "auth":                       "fas fa-shield-alt",
+        "auth.user":                  "fas fa-user-circle",
+        "auth.Group":                 "fas fa-layer-group",
+        "myapp.User":                 "fas fa-hotel",
+        "myapp.Room":                 "fas fa-bed",
+        "myapp.Booking":              "fas fa-calendar-check",
+        "myapp.Guest":                "fas fa-user-friends",
+        "myapp.Employee":             "fas fa-user-tie",
+        "myapp.Inventory":            "fas fa-boxes",
+        "myapp.InventoryRequest":     "fas fa-clipboard-list",
+        "myapp.Item":                 "fas fa-utensils",
+        "myapp.Order":                "fas fa-shopping-bag",
+        "myapp.Payment":              "fas fa-credit-card",
+        "myapp.Invoice":              "fas fa-file-invoice-dollar",
+        "myapp.Housekeeping":         "fas fa-broom",
+        "myapp.PaymentGatewayConfig": "fas fa-cogs",
+        "myapp.OTAChannelConfig":     "fas fa-plug",
+        "myapp.HousekeepingAssignment": "fas fa-tasks",
+        "myapp.SpecialRequest":       "fas fa-concierge-bell",
+        "myapp.LostFound":            "fas fa-search",
+        "myapp.Linen":                "fas fa-tshirt",
+        "myapp.Notification":         "fas fa-bell",
+        "myapp.Attendance":           "fas fa-clock",
+        "myapp.Shift":                "fas fa-calendar-alt",
+        "myapp.Leave":                "fas fa-umbrella-beach",
+    },
+    "default_icon_parents": "fas fa-chevron-right",
+    "default_icon_children": "fas fa-dot-circle",
+
+    "related_modal_active": True,
+    "custom_css": "admin/css/custom_admin.css",
+    "custom_js": None,
+    "use_google_fonts_cdn": True,
+    "show_ui_builder": False,
+
+    "search_model": ["myapp.User", "myapp.Booking", "myapp.Guest", "myapp.Room"],
+
+    "order_with_respect_to": [
+        "myapp",
+        "myapp.User",
+        "myapp.Room",
+        "myapp.Booking",
+        "myapp.Guest",
+        "myapp.Employee",
+        "myapp.Inventory",
+        "myapp.InventoryRequest",
+        "myapp.Item",
+        "myapp.Order",
+        "myapp.Payment",
+        "myapp.Invoice",
+        "myapp.Housekeeping",
+        "myapp.PaymentGatewayConfig",
+        "myapp.OTAChannelConfig",
+    ],
+
+    "changeform_format": "horizontal_tabs",
+    "changeform_format_overrides": {
+        "auth.user": "collapsible",
+        "auth.group": "vertical_tabs",
+    },
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": True,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": False,
+    "accent": "accent-warning",
+    "navbar": "navbar-dark",
+    "no_navbar_border": True,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-warning",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": True,
+    "sidebar_nav_compact_style": True,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": True,
+    "theme": "slate",
+    "dark_mode_theme": "slate",
+    "button_classes": {
+        "primary":   "btn-outline-primary",
+        "secondary": "btn-outline-secondary",
+        "info":      "btn-outline-info",
+        "warning":   "btn-warning",
+        "danger":    "btn-outline-danger",
+        "success":   "btn-outline-success",
+    },
+    "actions_sticky_top": True,
+}
+# ─────────────────────────────────────────────────────────────────────────────
 
 INSTALLED_APPS = [
     'jazzmin',
@@ -159,6 +289,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

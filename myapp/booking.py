@@ -100,17 +100,38 @@ class BookingListCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     
-    def patch(self, request, id):
+    def put(self, request, id):
         try:
-            booking = Booking.objects.get(booking_id=id)  # Use booking_id instead of id
+            booking = Booking.objects.get(booking_id=id)
         except Booking.DoesNotExist:
             return Response({"error": "Booking not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        serializer = BookingSerializer(booking, data=request.data, partial=True)  # partial=True allows updating just certain fields
+
+        serializer = BookingSerializer(booking, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, id):
+        try:
+            booking = Booking.objects.get(booking_id=id)
+        except Booking.DoesNotExist:
+            return Response({"error": "Booking not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = BookingSerializer(booking, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+        try:
+            booking = Booking.objects.get(booking_id=id)
+        except Booking.DoesNotExist:
+            return Response({"error": "Booking not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        booking.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
     
 
 from rest_framework.views import APIView

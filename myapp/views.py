@@ -19,18 +19,22 @@ from django.shortcuts import get_object_or_404
 
 class RegisterHotelView(APIView):
     def post(self, request):
-        # Deserialize the incoming request data
         serializer = UserSerializer(data=request.data)
         
         if serializer.is_valid():
             try:
-                # Save the new user
                 user = serializer.save()
+                # Set 7-day trial expiry
+                user.trial_expires_at = timezone.now() + timedelta(days=7)
+                user.is_trial = True
+                user.save(update_fields=['trial_expires_at', 'is_trial'])
+
                 response_data = {
                     "id": user.id,
                     "hotel_name": user.hotel_name,
                     "email": user.email,
-                    "message": "Hotel registered successfully."
+                    "trial_expires_at": user.trial_expires_at,
+                    "message": "Hotel registered successfully. Your 7-day free trial has started!"
                 }
                 return Response(response_data, status=status.HTTP_201_CREATED)
             except Exception as e:
@@ -38,7 +42,6 @@ class RegisterHotelView(APIView):
                     {"error": "An unexpected error occurred during registration.", "details": str(e)},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
-        # Return validation errors
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
