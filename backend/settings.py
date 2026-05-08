@@ -17,6 +17,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'hotel-management-backend-nu99.onrender.com',
+    'arog.sijankatuwalchhetri.com.np',
     os.environ.get('PYTHONANYWHERE_HOST', ''),
 ]
 
@@ -181,37 +182,64 @@ MIDDLEWARE = [
 CORS_ALLOW_ALL_ORIGINS = False
 
 
-# ✅ FIXED SECTION STARTS HERE
+# ── Origin helpers ────────────────────────────────────────────────────────────
 def clean_origin(url):
-    return url.rstrip("/") if url else url
+    """Strip trailing slash from an origin URL."""
+    return url.rstrip("/") if url else None
 
 
-FRONTEND_URL = clean_origin(os.environ.get("FRONTEND_URL"))
+def parse_frontend_urls():
+    """
+    Read one or more frontend origins from environment variables.
 
+    Supports two env vars:
+      FRONTEND_URL   – single origin (legacy, kept for backwards compat)
+      FRONTEND_URLS  – comma-separated list of origins
+
+    Returns a deduplicated list of clean origin strings.
+    """
+    origins = set()
+
+    single = clean_origin(os.environ.get("FRONTEND_URL", ""))
+    if single:
+        origins.add(single)
+
+    multi = os.environ.get("FRONTEND_URLS", "")
+    for url in multi.split(","):
+        cleaned = clean_origin(url.strip())
+        if cleaned:
+            origins.add(cleaned)
+
+    return list(origins)
+
+
+_extra_origins = parse_frontend_urls()
+
+# ── CORS ──────────────────────────────────────────────────────────────────────
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "https://hotel-management-one-zeta.vercel.app",
+    "https://arog.sijankatuwalchhetri.com.np",
+    *_extra_origins,
 ]
-
-if FRONTEND_URL:
-    CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.vercel\.app$",
+    r"^https://.*\.sijankatuwalchhetri\.com\.np$",
 ]
 
+# ── CSRF ──────────────────────────────────────────────────────────────────────
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "https://hotel-management-one-zeta.vercel.app",
+    "https://arog.sijankatuwalchhetri.com.np",
+    *_extra_origins,
 ]
-
-if FRONTEND_URL:
-    CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
 
 if os.environ.get("RENDER_EXTERNAL_HOSTNAME"):
     CSRF_TRUSTED_ORIGINS.append(
         f"https://{os.environ['RENDER_EXTERNAL_HOSTNAME']}"
     )
-# ✅ FIXED SECTION ENDS HERE
 
 
 CORS_ALLOW_CREDENTIALS = True
