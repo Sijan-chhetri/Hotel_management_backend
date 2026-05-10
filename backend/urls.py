@@ -20,19 +20,29 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
+from django.http import JsonResponse
+import datetime
+
+
+def health_check(request):
+    return JsonResponse({
+        "status": "ok",
+        "service": "Basera HMS API",
+        "version": "1.0.0",
+        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+    })
 
 
 urlpatterns = [
+    path('', health_check, name='health-check'),
     path('admin/', admin.site.urls),
-    path('', include('myapp.urls')), 
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),  # JWT Token generation
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # Token refresh endpoint
-     path('test-template/', TemplateView.as_view(template_name="admin/base_site.html")),
-    
+    path('', include('myapp.urls')),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('test-template/', TemplateView.as_view(template_name="admin/base_site.html")),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 else:
-    # Also serve media locally even when DEBUG=False (dev convenience)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
